@@ -21,12 +21,12 @@ public class Main {
 
     public static void main(String[] args) {
         lock();
-        LaunchConfigManager configManager = new LaunchConfigManager();
         ProcessManager processManager = null;
         EnvironmentManager environmentManager = new EnvironmentManager();
         File workingDirectory = new File(System.getProperty("user.dir"));
 
         try {
+            LaunchConfigManager configManager = new LaunchConfigManager();
             List<String> processBuilderParams = Arrays.asList(configManager.getLaunchCommand().split("\\s"));
             String javaExecutable = processBuilderParams.get(0);
             String jarFile = processBuilderParams.get(2);
@@ -40,6 +40,11 @@ public class Main {
                    processBuilderParams.set(0, "java");
                }
             }
+
+            //Добавляем classpath
+            String classpathValue = configManager.getClassPath();
+            processBuilderParams.add(1, "-classpath");
+            processBuilderParams.add(2, classpathValue);
 
             processManager = new ProcessManager(workingDirectory, processBuilderParams);
             processManager.runApplication();
@@ -64,8 +69,7 @@ public class Main {
                     e.getMessage(),
                     "Ошибка чтения файла конфигурации",
                     JOptionPane.ERROR_MESSAGE);
-        }
-        finally {
+        } finally {
             if(processManager != null) {
                 processManager.terminateApplication();
             }
