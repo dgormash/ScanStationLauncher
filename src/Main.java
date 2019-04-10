@@ -1,4 +1,4 @@
-import ru.sigmait.configmanagement.LaunchConfigManager;
+import ru.sigmait.configmanagement.ConfigManager;
 import ru.sigmait.environmentmanagement.EnvironmentManager;
 import ru.sigmait.exceptions.ProcessException;
 import ru.sigmait.processmanagement.ProcessManager;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,10 +27,11 @@ public class Main {
         File workingDirectory = new File(System.getProperty("user.dir"));
 
         try {
-            LaunchConfigManager configManager = new LaunchConfigManager();
-            List<String> processBuilderParams = Arrays.asList(configManager.getLaunchCommand().split("\\s"));
-            String javaExecutable = processBuilderParams.get(0);
-            String jarFile = processBuilderParams.get(2);
+            ConfigManager configManager = new ConfigManager();
+            List<String> launchCommandData = new ArrayList();
+            launchCommandData.addAll(Arrays.asList(configManager.getLaunchCommand().split("\\s")));
+            String javaExecutable = launchCommandData.get(0);
+            String jarFile = launchCommandData.get(2);
 
             if(!environmentManager.isPathExists(workingDirectory + "/" + jarFile)){
                 throw new FileNotFoundException("Не найден файл " + jarFile);
@@ -37,19 +39,21 @@ public class Main {
 
             if(!javaExecutable.equalsIgnoreCase("java")){
                if(!environmentManager.isPathExists(workingDirectory + "/" + javaExecutable + ".exe")){
-                   processBuilderParams.set(0, "java");
+                   launchCommandData.set(0, "java");
                }
             }
 
             //Добавляем classpath
             String classpathValue = configManager.getClassPath();
-            processBuilderParams.add(1, "-classpath");
-            processBuilderParams.add(2, classpathValue);
+            launchCommandData.add(1, "-classpath");
+            launchCommandData.add(2, "\"" + classpathValue + "\"");
 
-            processManager = new ProcessManager(workingDirectory, processBuilderParams);
+            processManager = new ProcessManager(workingDirectory, launchCommandData);
             processManager.runApplication();
 
-        }catch(IOException e){
+        }
+
+        catch(IOException e){
             JOptionPane.showMessageDialog(null,
                     e.getMessage(),
                     "Ошибка запуска скан-станции",
@@ -69,7 +73,8 @@ public class Main {
                     e.getMessage(),
                     "Ошибка чтения файла конфигурации",
                     JOptionPane.ERROR_MESSAGE);
-        } finally {
+        }
+        finally {
             if(processManager != null) {
                 processManager.terminateApplication();
             }
