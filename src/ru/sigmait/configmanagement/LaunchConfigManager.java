@@ -11,7 +11,7 @@ public class LaunchConfigManager {
     private static FileInputStream _fileInputStream;
 
     public LaunchConfigManager() throws FileNotFoundException {
-        _fileInputStream = new FileInputStream("./ScanStationLauncher.properties");
+        _fileInputStream = new FileInputStream("ScanStationLauncher.properties");
     }
 
     public String getLaunchCommand() throws IOException, NullPointerException {
