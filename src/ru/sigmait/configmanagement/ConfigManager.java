@@ -46,7 +46,7 @@ public class ConfigManager {
 
             for (Method method : methods) {
                 String methodName = method.getName();
-                if(methodName.toLowerCase().contains("set_" + propertyName.toString().toLowerCase())){
+                if(methodName.toLowerCase().contains("set_" + propertyName.toString().trim().toLowerCase())){
                     String value = getPropertyValue(propertyName.toString());
                     Object propertyValue;
                     Class<?>[] types = method.getParameterTypes();
@@ -57,7 +57,7 @@ public class ConfigManager {
                             propertyValue = value;
                             break;
                         case "boolean":
-                            propertyValue = value == "yes";
+                            propertyValue = value.equalsIgnoreCase("yes");
                             break;
                         case "int":
                             try{
@@ -77,7 +77,7 @@ public class ConfigManager {
     private static String getPropertyValue(String property){
         String propertyValue;
         propertyValue = _properties.getProperty(property);
-        return propertyValue;
+        return propertyValue.trim();
     }
 
 }

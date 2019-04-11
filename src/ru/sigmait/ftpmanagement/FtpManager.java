@@ -42,6 +42,10 @@ private int _serverPort;
     public void downloadFile(String source, String destination) throws IOException {
         boolean isLoggedin =  this.connect();
         if(isLoggedin){
+            boolean useBinary = _config.get_useBinary();
+            if(useBinary){
+                _client.setFileType(FTP.BINARY_FILE_TYPE);
+            }
             FileOutputStream destFileOutputStream = new FileOutputStream(destination);
             _client.retrieveFile(source, destFileOutputStream);
         }
@@ -72,10 +76,7 @@ private int _serverPort;
         int connectTimeOut = _config.get_Timeout();
         client.setConnectTimeout(connectTimeOut);
 
-        boolean useBinary = _config.get_useBinary();
-        if(useBinary){
-            client.setFileType(FTP.BINARY_FILE_TYPE);
-        }
+
 
         return client;
     }
