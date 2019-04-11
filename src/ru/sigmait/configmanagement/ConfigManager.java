@@ -6,7 +6,9 @@ import javax.imageio.IIOException;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Properties;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public class ConfigManager {
 
@@ -35,9 +37,40 @@ public class ConfigManager {
         return getPropertyValue("classpath");
     }
 
-    public FtpConfig getFtpParameters(){
+    public FtpConfig getFtpParameters() throws InvocationTargetException, IllegalAccessException, NumberFormatException {
         FtpConfig config = new FtpConfig();
-        //todo Заполнить конфиг значениями
+
+        ArrayList<?> propertyNames = Collections.list(_properties.propertyNames());
+        Method[] methods = config.getClass().getMethods();
+        for (Object propertyName:propertyNames) {
+
+            for (Method method : methods) {
+                String methodName = method.getName();
+                if(methodName.toLowerCase().contains("set_" + propertyName.toString().toLowerCase())){
+                    String value = getPropertyValue(propertyName.toString());
+                    Object propertyValue;
+                    Class<?>[] types = method.getParameterTypes();
+                    String typeName = types[0].getSimpleName();
+
+                    switch (typeName){
+                       default:
+                            propertyValue = value;
+                            break;
+                        case "boolean":
+                            propertyValue = value == "yes";
+                            break;
+                        case "int":
+                            try{
+                            propertyValue = Integer.parseInt(value);
+                            }catch (NumberFormatException e){
+                                throw new NumberFormatException(String.format("Неверное числовое значение в файле ScanStationLauncher.properties. \nИмя параметра: %s; значение: %s", propertyName, value));
+                            }
+                            break;
+                    }
+                    method.invoke(config, propertyValue);
+                }
+            }
+        }
         return config;
     }
 

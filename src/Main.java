@@ -1,6 +1,8 @@
 import ru.sigmait.configmanagement.ConfigManager;
 import ru.sigmait.environmentmanagement.EnvironmentManager;
 import ru.sigmait.exceptions.ProcessException;
+import ru.sigmait.ftpmanagement.FtpConfig;
+import ru.sigmait.ftpmanagement.FtpManager;
 import ru.sigmait.processmanagement.ProcessManager;
 
 import javax.swing.*;
@@ -8,6 +10,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.ArrayList;
@@ -28,6 +31,10 @@ public class Main {
 
         try {
             ConfigManager configManager = new ConfigManager();
+            FtpConfig config = configManager.getFtpParameters();
+            FtpManager ftpManager = new FtpManager(config);
+            List<String> files = ftpManager.dir();
+            //todo Получать конфигурацию ftp-сервера
             List<String> launchCommandData = new ArrayList();
             launchCommandData.addAll(Arrays.asList(configManager.getLaunchCommand().split("\\s")));
             String javaExecutable = launchCommandData.get(0);
@@ -69,6 +76,21 @@ public class Main {
                     "Ошибка в процессе работы скан-станции",
                     JOptionPane.ERROR_MESSAGE);
         }catch (NullPointerException e){
+            JOptionPane.showMessageDialog(null,
+                    e.getMessage(),
+                    "Ошибка чтения файла конфигурации",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalAccessException e) {
+            JOptionPane.showMessageDialog(null,
+                    e.getMessage(),
+                    "Ошибка чтения файла конфигурации",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (InvocationTargetException e) {
+            JOptionPane.showMessageDialog(null,
+                    e.getMessage(),
+                    "Ошибка чтения файла конфигурации",
+                    JOptionPane.ERROR_MESSAGE);
+        }catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(null,
                     e.getMessage(),
                     "Ошибка чтения файла конфигурации",

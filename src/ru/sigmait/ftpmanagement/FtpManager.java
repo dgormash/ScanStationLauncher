@@ -1,54 +1,82 @@
 package ru.sigmait.ftpmanagement;
 
-import sun.net.ftp.FtpClient;
-import sun.net.ftp.FtpProtocolException;
-
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
 
 public class FtpManager {
 
-private FtpClient _client;
+private FTPClient _client;
+private FtpConfig _config;
+private String _serverAddress;
+private String _login;
+private String _password;
+private int _serverPort;
 
-    public FtpManager(FtpConfig config) throws IOException, FtpProtocolException {
-        String address = config.get_ftpAddress();
-        int port = Integer.parseInt(config.get_ftpPort());
-        //Создали экземпляр ftp-клиента.
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(address, port);
-        initFtpClient(inetSocketAddress);
-        initFtpClientConfiguration(config);
+    public FtpManager(FtpConfig config) {
+        _config = config;
+        _login = config.get_ftpLogin();
+        _password = config.get_ftpPassword();
+        _serverAddress = _config.get_ftpAddress();
+        _serverPort = config.get_ftpPort();
     }
 
-    public List<String> dir(){
-        List<String> directoryContents = new ArrayList<>();
-        return directoryContents;
+    public List<String> dir() throws IOException {
+
+       boolean isLoggedin =  this.connect();
+        List<String> directoryContents = null;
+        if(isLoggedin){
+           _client.list(_serverAddress);
+
+       directoryContents = Arrays.asList(_client.listNames());
+
+       this.disconnect();
+       }
+       return directoryContents;
     }
 
-    public void downloadFile(String filePath){
+    public void downloadFile(String source, String destination) throws IOException {
+        boolean isLoggedin =  this.connect();
+        if(isLoggedin){
+            FileOutputStream destFileOutputStream = new FileOutputStream(destination);
+            _client.retrieveFile(source, destFileOutputStream);
+        }
 
+        this.disconnect();
     }
 
-    private void connect(){
-
+    private boolean connect() throws IOException {
+        if(_client == null) {
+            _client = getNewClient();
+        }
+        _client.connect(_serverAddress, _serverPort);
+        return _client.login(_login, _password);
     }
 
-    private void disconnect(){
+    private void disconnect() throws IOException {
+        if(_client == null)
+            return;
 
+        if(_client.isConnected()){
+            _client.disconnect();
+            _client = null;
+        }
     }
 
-    private void initFtpClient(InetSocketAddress inetSocketAddress) throws IOException, FtpProtocolException {
-        _client = FtpClient.create(inetSocketAddress);
-    }
+    private FTPClient getNewClient() throws IOException {
+        FTPClient client = new FTPClient();
+        int connectTimeOut = _config.get_Timeout();
+        client.setConnectTimeout(connectTimeOut);
 
-    private void initFtpClientConfiguration(FtpConfig config){
-//        String proxyAddress = config.get_proxyAddress();
-//        if(proxyAddress != null && !proxyAddress.isEmpty()){
-//            Proxy proxy = new Proxy(new InetSocketAddress());
-//            _client.setProxy(proxy);
-//        }
+        boolean useBinary = _config.get_useBinary();
+        if(useBinary){
+            client.setFileType(FTP.BINARY_FILE_TYPE);
+        }
 
+        return client;
     }
 }
