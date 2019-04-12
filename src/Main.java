@@ -1,3 +1,4 @@
+import ru.sigmait.applicationmanagement.ApplicationManager;
 import ru.sigmait.configmanagement.ConfigManager;
 import ru.sigmait.environmentmanagement.EnvironmentManager;
 import ru.sigmait.exceptions.ProcessException;
@@ -25,15 +26,19 @@ public class Main {
 
     public static void main(String[] args) {
         lock();
+
+
         ProcessManager processManager = null;
         EnvironmentManager environmentManager = new EnvironmentManager();
         File workingDirectory = new File(System.getProperty("user.dir"));
 
         try {
+            ApplicationManager applicationManager = new ApplicationManager();
+            applicationManager.start();
             ConfigManager configManager = new ConfigManager();
-            FtpConfig config = configManager.getFtpParameters();
-            FtpManager ftpManager = new FtpManager(config);
-            List<String> files = ftpManager.dir();
+//            FtpConfig config = configManager.getFtpParameters();
+//            FtpManager ftpManager = new FtpManager(config);
+//            List<String> files = ftpManager.dir();
             //todo Получать конфигурацию ftp-сервера
             List<String> launchCommandData = new ArrayList();
             launchCommandData.addAll(Arrays.asList(configManager.getLaunchCommand().split("\\s")));
@@ -80,7 +85,8 @@ public class Main {
                     e.getMessage(),
                     "Ошибка чтения файла конфигурации",
                     JOptionPane.ERROR_MESSAGE);
-        } catch (IllegalAccessException e) {
+        }
+        catch (IllegalAccessException e) {
             JOptionPane.showMessageDialog(null,
                     e.getMessage(),
                     "Ошибка чтения файла конфигурации",
@@ -90,7 +96,8 @@ public class Main {
                     e.getMessage(),
                     "Ошибка чтения файла конфигурации",
                     JOptionPane.ERROR_MESSAGE);
-        }catch (NumberFormatException e) {
+        }
+        catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(null,
                     e.getMessage(),
                     "Ошибка чтения файла конфигурации",

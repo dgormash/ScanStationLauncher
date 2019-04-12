@@ -76,8 +76,6 @@ private int _serverPort;
         int connectTimeOut = _config.get_Timeout();
         client.setConnectTimeout(connectTimeOut);
 
-
-
         return client;
     }
 }

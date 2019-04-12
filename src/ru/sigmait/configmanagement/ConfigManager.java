@@ -66,6 +66,13 @@ public class ConfigManager {
                                 throw new NumberFormatException(String.format("Неверное числовое значение в файле ScanStationLauncher.properties. \nИмя параметра: %s; значение: %s", propertyName, value));
                             }
                             break;
+                        case "long":
+                            try{
+                                propertyValue = Long.parseLong(value);
+                            }catch (NumberFormatException e){
+                                throw new NumberFormatException(String.format("Неверное числовое значение в файле ScanStationLauncher.properties. \nИмя параметра: %s; значение: %s", propertyName, value));
+                            }
+                            break;
                     }
                     method.invoke(config, propertyValue);
                 }

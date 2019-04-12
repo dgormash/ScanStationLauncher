@@ -13,8 +13,9 @@ public class FtpConfig {
     private boolean _usePassive;
     private boolean _keepAlive;
     private boolean _enableSsl;
-    private String _fileNameMask;
-    private int _repeatAfter;
+    private String _fullInstallerMask;
+    private String _patchInstallerMask;
+    private long _repeatAfter;
     private int _timeout;
 
     public String get_ftpAddress() {
@@ -113,20 +114,28 @@ public class FtpConfig {
         this._enableSsl = enableSsl;
     }
 
-    public String get_fileNameMask() {
-        return _fileNameMask;
+    public String get_fullInstallerMask() {
+        return _fullInstallerMask;
     }
 
-    public void set_fileNameMask(String fileNameMask) {
-        this._fileNameMask = fileNameMask;
+    public void set_fullInstallerMask(String mask) {
+        this._fullInstallerMask = mask.replaceAll("\\[:version\\]", "\\\\d+\\\\.\\\\d+");
     }
 
-    public int get_repeatAfter() {
+    public String get_patchInstallerMask() {
+        return _patchInstallerMask;
+    }
+
+    public void set_patchInstallerMask(String mask) {
+        this._patchInstallerMask = mask.replaceAll("\\[:currentVersion\\]|\\[:newVersion\\]", "\\\\d+\\\\.\\\\d+");
+    }
+
+    public long get_repeatAfter() {
         return _repeatAfter;
     }
 
-    public void set_repeatAfter(int repeatAfter) {
-        this._repeatAfter = repeatAfter;
+    public void set_repeatAfter(long repeatAfter) {
+        this._repeatAfter = repeatAfter * 1000 * 60;
     }
 
     public int get_Timeout() {
@@ -134,6 +143,6 @@ public class FtpConfig {
     }
 
     public void set_Timeout(int timeout) {
-        this._timeout = timeout;
+        this._timeout = timeout * 1000 * 60;
     }
 }
