@@ -4,7 +4,6 @@ import ru.sigmait.environmentmanagement.FileDownloadedListener;
 import ru.sigmait.ftpmanagement.FtpConfig;
 import ru.sigmait.ftpmanagement.FtpErrorListener;
 import ru.sigmait.ftpmanagement.FtpManager;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,6 +16,9 @@ import java.util.regex.Pattern;
 public class FtpMonitoringTimerTask extends TimerTask {
     private FtpConfig _config;
     private String _currentVersion;
+    public  void setCurrentVersion (String version){
+        _currentVersion = version;
+    }
     private String _copiedFileDestinationFolder;
     private List<FileDownloadedListener> _ftpEventsListeners = new ArrayList<>();
     private List<FtpErrorListener> _errorListeners = new ArrayList<>();
@@ -39,53 +41,55 @@ public class FtpMonitoringTimerTask extends TimerTask {
     }
 
     private void startTask() throws IOException {
-        //todo Передать сюда текущую версию скан-станции для сравнения с найденными обновлениями
-        FtpManager ftpManager = new FtpManager(_config);
-        List<String> files = ftpManager.dir();
-        String fullInstallerFileMask = _config.get_fullInstallerMask();
-        String patchFileMask = _config.get_patchInstallerMask();
-        Pattern fullVersionNumberPattern = Pattern.compile( "\\d+\\.\\d+");
-        TreeMap<Float, String> fullInstallers = new TreeMap<>();
+        try {
+            FtpManager ftpManager = new FtpManager(_config);
+            List<String> files = ftpManager.dir();
+            String fullInstallerFileMask = _config.get_fullInstallerMask();
+            String patchFileMask = _config.get_patchInstallerMask();
+            Pattern fullVersionNumberPattern = Pattern.compile("\\d+\\.\\d+");
+            TreeMap<Float, String> fullInstallers = new TreeMap<>();
 
-        String fullInstallerPattern = "(?i)" + fullInstallerFileMask.replaceAll("\\[:version\\]", "\\\\d+\\\\.\\\\d+");
+            String fullInstallerPattern = "(?i)" + fullInstallerFileMask.replaceAll("\\[:version\\]", "\\\\d+\\\\.\\\\d+");
 
-        for (String fileName:files) {
-            if(Pattern.matches(fullInstallerPattern, fileName)){
+            for (String fileName : files) {
+                if (Pattern.matches(fullInstallerPattern, fileName)) {
 
-                Matcher match = fullVersionNumberPattern.matcher(fileName);
-                float version = 0;
-                while(match.find()){
-                    version = Float.parseFloat(fileName.substring(match.start(), match.end()));
+                    Matcher match = fullVersionNumberPattern.matcher(fileName);
+                    float version = 0;
+                    while (match.find()) {
+                        version = Float.parseFloat(fileName.substring(match.start(), match.end()));
+                    }
+
+                    fullInstallers.put(version, fileName);
                 }
-
-                fullInstallers.put(version, fileName);
             }
-        }
 
-        float maxFullInstallerVersionFloat = fullInstallers.lastKey();
-        String maxFullInstallerVersionString = Float.toString(maxFullInstallerVersionFloat);
+            float maxFullInstallerVersionFloat = fullInstallers.lastKey();
+            String maxFullInstallerVersionString = Float.toString(maxFullInstallerVersionFloat);
 
-        if(maxFullInstallerVersionString.equals(_currentVersion))
-            return;
+            if (maxFullInstallerVersionString.equals(_currentVersion))
+                return;
 
-        String searchedPatchInstallerFileName = patchFileMask.replaceFirst("\\[:currentVersion\\]", /*_currentVersion*/"1.0")
-                .replaceFirst("\\[:newVersion\\]", maxFullInstallerVersionString);
+            String searchedPatchInstallerFileName = patchFileMask.replaceFirst("\\[:currentVersion\\]", _currentVersion)
+                    .replaceFirst("\\[:newVersion\\]", maxFullInstallerVersionString);
 
-        String destinationFilePath;
-        if (files.contains(searchedPatchInstallerFileName)) {
-            destinationFilePath = _copiedFileDestinationFolder  + searchedPatchInstallerFileName;
-        }else{
-            destinationFilePath = _copiedFileDestinationFolder + fullInstallers.get(maxFullInstallerVersionFloat);
-        }
+            String destinationFilePath;
+            if (files.contains(searchedPatchInstallerFileName)) {
+                destinationFilePath = _copiedFileDestinationFolder + searchedPatchInstallerFileName;
+            } else {
+                destinationFilePath = _copiedFileDestinationFolder + fullInstallers.get(maxFullInstallerVersionFloat);
+            }
 
-        File updateFile = new File(destinationFilePath);
-        if(updateFile.exists()) return;
+            File updateFile = new File(destinationFilePath);
+            if (updateFile.exists()) return;
 
-        boolean downloadResult = ftpManager.downloadFile(searchedPatchInstallerFileName, destinationFilePath);
-            if(downloadResult){
+            boolean downloadResult = ftpManager.downloadFile(searchedPatchInstallerFileName, destinationFilePath);
+            if (downloadResult) {
                 notifyListeners(destinationFilePath);
             }
-
+        }catch(Exception e){
+            System.err.println(e.getMessage() + e.getCause());
+        }
     }
 
     public  void addListener(FileDownloadedListener listener){

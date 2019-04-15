@@ -3,53 +3,67 @@ package ru.sigmait.applicationmanagement;
 import ru.sigmait.configmanagement.ConfigManager;
 import ru.sigmait.environmentmanagement.EnvironmentManager;
 import ru.sigmait.environmentmanagement.FileDownloadedListener;
-import ru.sigmait.exceptions.ProcessException;
 import ru.sigmait.ftpmanagement.FtpConfig;
+import ru.sigmait.ftpmanagement.FtpErrorListener;
 import ru.sigmait.scanstationmanagement.ScanStationErrorListener;
 import ru.sigmait.scanstationmanagement.ScanStationManager;
 import ru.sigmait.updatemanagement.UpdateManager;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ApplicationManager implements FileDownloadedListener, ScanStationErrorListener {
+public class ApplicationManager implements FileDownloadedListener, ScanStationErrorListener, FtpErrorListener, NotificationResultListener {
 
     private ConfigManager _configManager;
     private String _currentVersion;
     private FtpConfig _ftpConfig;
     private UpdateManager _updateManager;
     private ScanStationManager _scanStationManager;
+    private UserNotifier _userNotifier;
 
-
-    public void start() throws IllegalAccessException, IOException, InvocationTargetException, InterruptedException, ProcessException {
+    public ApplicationManager() throws IllegalAccessException, IOException, InvocationTargetException, InterruptedException {
         _configManager = new ConfigManager();
         _ftpConfig = _configManager.getFtpParameters();
+
         _updateManager = new UpdateManager(_ftpConfig);
         _updateManager.set_fileDownloadedListener(this);
+
         _updateManager.set_preScriptCommand(_configManager.getPreScriptCommand());
         _updateManager.set_postScriptCommand(_configManager.getPostScriptCommand());
+
         _currentVersion = getCurrentVersion();
+        _userNotifier = new UserNotifier();
 
 
-        //todo Получить текущую версию приложения
-        //Проверилили, есть ли неустановленное обновление в каталоге temp. Если есть, то мы его устанавливаем. Скан-станция ещё не запущена.
-        //Мониторинг ftp-ещё не запущен. Можем смело запускать процесс обновления.
-        checkUpdateFileExistence();
-        startUpdateMonitoring();
+        if(_currentVersion != null){
+            _updateManager.setCurrentVersion(_currentVersion);
+            //Проверилили, есть ли неустановленное обновление в каталоге temp. Если есть, то мы его устанавливаем. Скан-станция ещё не запущена.
+            //Мониторинг ftp-ещё не запущен. Можем смело запускать процесс обновления.
+            checkLocalDirectoryForUpdates();
+            startUpdateMonitoring();
+        }
         startScanStation();
+    }
+
+    public void stop(){
+        if(_updateManager != null){
+            _updateManager.stopCheckingUpdates();
+        }
+
+        if(_scanStationManager != null){
+            _scanStationManager.terminateApplication();
+        }
     }
 
     private void startUpdateMonitoring(){
         _updateManager.startCheckingUpdates();
     }
 
-    private void checkUpdateFileExistence() throws IOException, InterruptedException {
+    private void checkLocalDirectoryForUpdates() throws IOException, InterruptedException {
 
         String fullInstallerMask = _ftpConfig.get_fullInstallerMask().replaceFirst("\\[:version\\]", _currentVersion);
         String patchInstallerMask = _ftpConfig.get_patchInstallerMask().replaceFirst("\\[:currentVersion\\]", _currentVersion);
@@ -70,11 +84,13 @@ public class ApplicationManager implements FileDownloadedListener, ScanStationEr
                 if(dialogResult == JOptionPane.YES_OPTION){
                     _updateManager.startUpdate(fileOfUpdate);
                 }
+                //todo Обработска ситуации, когда пользователь ответил "Напомнить позднее". Запускаем процесс нотификации
+                //todo пользователя в таймере с интервалом в 10 минут
             }
         }
     }
 
-    private void startScanStation() throws IOException, InterruptedException, ProcessException {
+    private void startScanStation() throws IOException,  InterruptedException {
         EnvironmentManager environmentManager = new EnvironmentManager();
         File workingDirectory = new File(System.getProperty("user.dir"));
         List<String> launchCommandData = new ArrayList();
@@ -98,6 +114,7 @@ public class ApplicationManager implements FileDownloadedListener, ScanStationEr
         launchCommandData.add(2, "\"" + classpathValue + "\"");
 
         _scanStationManager = new ScanStationManager(workingDirectory, launchCommandData);
+        _scanStationManager.addListeners(this::ErrorOccurred);
         _scanStationManager.runApplication();
     }
 
@@ -146,8 +163,23 @@ public class ApplicationManager implements FileDownloadedListener, ScanStationEr
     }
 
     private String getCurrentVersion(){
-        return "1.0";
-        //todo Обновлени текущей версии при установленном update'е
+        String version = null;
+
+        try(BufferedReader reader = new BufferedReader( new FileReader("app.version")))
+        {
+            String line;
+            while((line = reader.readLine()) != null){
+                version = line;
+            }
+        }catch(IOException e)
+        {
+            JOptionPane.showMessageDialog(null,
+                    e.getMessage(),
+                    "Ошибка определения текущей версии приложения",
+                    JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+        return version;
     }
 
     @Override
@@ -156,5 +188,13 @@ public class ApplicationManager implements FileDownloadedListener, ScanStationEr
                 message,
                 "Ошибка работы скан-станции",
                 JOptionPane.ERROR_MESSAGE);
+    }
+
+    @Override
+    public void NotifyAboutUsersChoice(int dialogResult) {
+        if(dialogResult == JOptionPane.YES_OPTION){
+            _userNotifier.stopUserNotification();
+
+        }
     }
 }

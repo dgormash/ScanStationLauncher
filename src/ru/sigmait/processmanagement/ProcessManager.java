@@ -1,4 +1,6 @@
-package ru.sigmait.scanstationmanagement;
+package ru.sigmait.processmanagement;
+
+import ru.sigmait.exceptions.ProcessException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -6,20 +8,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ScanStationManager {
+public class ProcessManager {
     private Process _process;
     private ProcessBuilder _processBuilder;
-    private List<ScanStationErrorListener> _errorListeners = new ArrayList<>();
 
-    public ScanStationManager(File workingDirectory, List<String> processBuilderParams) {
+    public ProcessManager(File workingDirectory, List<String> processBuilderParams) {
         _processBuilder = new ProcessBuilder(processBuilderParams);
         _processBuilder.directory(workingDirectory);
     }
 
-    public void runApplication() throws IOException, InterruptedException {
+    public void runApplication() throws IOException, InterruptedException, ProcessException {
         this.startProcess();
     }
 
@@ -28,7 +28,7 @@ public class ScanStationManager {
     }
 
 
-    private void startProcess() throws IOException, InterruptedException {
+    private void startProcess() throws IOException, InterruptedException, ProcessException {
         Instant startTime = Instant.now();
         _process = _processBuilder.start();
 
@@ -50,7 +50,7 @@ public class ScanStationManager {
             this.startProcess();
         }
         else{
-            notifyErrorListeners("Ошибка в процессе работы программы \"Скан-станция\".\nПожалуйста, обратитесь к Администратору.");
+            throw new ProcessException("Ошибка в процессе работы программы \"Скан-станция\".\nПожалуйста, обратитесь к Администратору.");
         }
     }
 
@@ -58,15 +58,5 @@ public class ScanStationManager {
         if(_process == null) return;
 
         _process.destroy();
-    }
-
-    private void notifyErrorListeners(String message){
-        for (ScanStationErrorListener listener:_errorListeners) {
-            listener.ErrorOccurred(message);
-        }
-    }
-
-    public void addListeners(ScanStationErrorListener listener){
-        _errorListeners.add(listener);
     }
 }

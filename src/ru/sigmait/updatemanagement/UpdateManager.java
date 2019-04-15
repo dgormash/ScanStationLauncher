@@ -1,7 +1,6 @@
 package ru.sigmait.updatemanagement;
 
 import ru.sigmait.environmentmanagement.FileDownloadedListener;
-import ru.sigmait.environmentmanagement.FileMonitor;
 import ru.sigmait.ftpmanagement.FtpConfig;
 import ru.sigmait.timertasks.FtpMonitoringTimerTask;
 import utils.ZipUtility;
@@ -21,6 +20,10 @@ import java.util.TimerTask;
 public class UpdateManager {
 
     private FtpConfig _ftpConfig;
+    private String _currentVersion;
+    public void setCurrentVersion(String version){
+        _currentVersion = version;
+    }
     private Timer _timer = new Timer();
     private FileDownloadedListener _fileDownloadedListener;
     private final String TEMP_DIRECTORY = System.getProperty("java.io.tmpdir");
@@ -45,6 +48,7 @@ public class UpdateManager {
 
     public void startCheckingUpdates(){
         TimerTask ftpMonitoringTimerTask = new FtpMonitoringTimerTask(_ftpConfig);
+        ((FtpMonitoringTimerTask) ftpMonitoringTimerTask).setCurrentVersion(_currentVersion);
         ((FtpMonitoringTimerTask) ftpMonitoringTimerTask).setCopiedFileDestinationFolder(TEMP_DIRECTORY);
 
         ((FtpMonitoringTimerTask) ftpMonitoringTimerTask).addListener(_fileDownloadedListener);
@@ -60,7 +64,7 @@ public class UpdateManager {
         ZipUtility zipUtility = new ZipUtility();
         String directoryOfUpdateContents = TEMP_DIRECTORY  + getFileNameWithoutExtension(fileOfUpdate);
         String destDirectory = HOME_DIRECTORY ;
-        zipUtility.unzip(/*TEMP_DIRECTORY + */fileOfUpdate.toString(), directoryOfUpdateContents);
+        zipUtility.unzip(fileOfUpdate.toString(), directoryOfUpdateContents);
         //Получаем комманду pre-скрипта.
         if(_preScriptCommand != null){
             Path preScriptPath = Paths.get(directoryOfUpdateContents + File.separator + _preScriptCommand);
@@ -108,7 +112,9 @@ public class UpdateManager {
 
     private void startProcess(String filePath) throws IOException, InterruptedException {
         ProcessBuilder processBuilder = new ProcessBuilder(filePath);
+        try{
         Process process = processBuilder.start();
+
         BufferedReader br = new BufferedReader(
                 new InputStreamReader(
                         process.getInputStream()));
@@ -117,5 +123,9 @@ public class UpdateManager {
         while((line = br.readLine()) != null){
         }
         process.waitFor();
+        }catch(IOException e) {
+            System.out.println(e.getMessage());
+        }
+
     }
 }

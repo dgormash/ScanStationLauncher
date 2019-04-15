@@ -1,10 +1,13 @@
 package ru.sigmait.ftpmanagement;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 
@@ -46,14 +49,23 @@ private int _serverPort;
             boolean useBinary = _config.get_useBinary();
             if(useBinary){
                 _client.setFileType(FTP.BINARY_FILE_TYPE);
+                _client.setFileTransferMode(FTP.BINARY_FILE_TYPE);
             }
 
             boolean usePassive =  _config.get_usePassive();
             if(usePassive){
                 _client.enterLocalPassiveMode();
             }
-            FileOutputStream destFileOutputStream = new FileOutputStream(destination);
-            downloadResult = _client.retrieveFile("\"" + source + "\"", destFileOutputStream);
+            _client.setControlEncoding("UTF-8");
+            File destFile = new File(destination.trim());
+            FileOutputStream destFileOutputStream = new FileOutputStream(destFile);
+            InputStream inputStream = _client.retrieveFileStream(destFile.getName());
+            FileOutputStream fileOutputStream = new FileOutputStream(destFile);
+            IOUtils.copy(inputStream, fileOutputStream);
+            fileOutputStream.flush();
+
+            downloadResult = _client.completePendingCommand();
+
             this.disconnect();
             destFileOutputStream.close();
         }
