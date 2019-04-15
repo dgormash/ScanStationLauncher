@@ -119,7 +119,7 @@ public class FtpConfig {
     }
 
     public void set_fullInstallerMask(String mask) {
-        this._fullInstallerMask = mask.replaceAll("\\[:version\\]", "\\\\d+\\\\.\\\\d+");
+        this._fullInstallerMask = mask;
     }
 
     public String get_patchInstallerMask() {
@@ -127,7 +127,7 @@ public class FtpConfig {
     }
 
     public void set_patchInstallerMask(String mask) {
-        this._patchInstallerMask = mask.replaceAll("\\[:currentVersion\\]|\\[:newVersion\\]", "\\\\d+\\\\.\\\\d+");
+        this._patchInstallerMask = mask;
     }
 
     public long get_repeatAfter() {

@@ -39,18 +39,26 @@ private int _serverPort;
        return directoryContents;
     }
 
-    public void downloadFile(String source, String destination) throws IOException {
+    public boolean downloadFile(String source, String destination) throws IOException {
         boolean isLoggedin =  this.connect();
+        boolean downloadResult = false;
         if(isLoggedin){
             boolean useBinary = _config.get_useBinary();
             if(useBinary){
                 _client.setFileType(FTP.BINARY_FILE_TYPE);
             }
+
+            boolean usePassive =  _config.get_usePassive();
+            if(usePassive){
+                _client.enterLocalPassiveMode();
+            }
             FileOutputStream destFileOutputStream = new FileOutputStream(destination);
-            _client.retrieveFile(source, destFileOutputStream);
+            downloadResult = _client.retrieveFile("\"" + source + "\"", destFileOutputStream);
+            this.disconnect();
+            destFileOutputStream.close();
         }
 
-        this.disconnect();
+        return downloadResult;
     }
 
     private boolean connect() throws IOException {
@@ -71,10 +79,11 @@ private int _serverPort;
         }
     }
 
-    private FTPClient getNewClient() throws IOException {
+    private FTPClient getNewClient(){
         FTPClient client = new FTPClient();
         int connectTimeOut = _config.get_Timeout();
         client.setConnectTimeout(connectTimeOut);
+        client.setAutodetectUTF8(true);
 
         return client;
     }

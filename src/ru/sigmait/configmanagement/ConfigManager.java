@@ -25,7 +25,7 @@ public class ConfigManager {
         return getPropertyValue("launchcommand");
     }
 
-    public String getPrescriptCommand(){
+    public String getPreScriptCommand(){
         return getPropertyValue("prescript");
     }
 

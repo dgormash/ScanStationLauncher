@@ -2,9 +2,7 @@ import ru.sigmait.applicationmanagement.ApplicationManager;
 import ru.sigmait.configmanagement.ConfigManager;
 import ru.sigmait.environmentmanagement.EnvironmentManager;
 import ru.sigmait.exceptions.ProcessException;
-import ru.sigmait.ftpmanagement.FtpConfig;
-import ru.sigmait.ftpmanagement.FtpManager;
-import ru.sigmait.processmanagement.ProcessManager;
+import ru.sigmait.scanstationmanagement.ScanStationManager;
 
 import javax.swing.*;
 import java.io.File;
@@ -28,40 +26,38 @@ public class Main {
         lock();
 
 
-        ProcessManager processManager = null;
+        ScanStationManager processManager = null;
         EnvironmentManager environmentManager = new EnvironmentManager();
         File workingDirectory = new File(System.getProperty("user.dir"));
 
         try {
             ApplicationManager applicationManager = new ApplicationManager();
             applicationManager.start();
-            ConfigManager configManager = new ConfigManager();
-//            FtpConfig config = configManager.getFtpParameters();
-//            FtpManager ftpManager = new FtpManager(config);
-//            List<String> files = ftpManager.dir();
-            //todo Получать конфигурацию ftp-сервера
-            List<String> launchCommandData = new ArrayList();
-            launchCommandData.addAll(Arrays.asList(configManager.getLaunchCommand().split("\\s")));
-            String javaExecutable = launchCommandData.get(0);
-            String jarFile = launchCommandData.get(2);
-
-            if(!environmentManager.isPathExists(workingDirectory + "/" + jarFile)){
-                throw new FileNotFoundException("Не найден файл " + jarFile);
-            }
-
-            if(!javaExecutable.equalsIgnoreCase("java")){
-               if(!environmentManager.isPathExists(workingDirectory + "/" + javaExecutable + ".exe")){
-                   launchCommandData.set(0, "java");
-               }
-            }
-
-            //Добавляем classpath
-            String classpathValue = configManager.getClassPath();
-            launchCommandData.add(1, "-classpath");
-            launchCommandData.add(2, "\"" + classpathValue + "\"");
-
-            processManager = new ProcessManager(workingDirectory, launchCommandData);
-            processManager.runApplication();
+//            ConfigManager configManager = new ConfigManager();
+//
+//            //todo Получать конфигурацию ftp-сервера
+//            List<String> launchCommandData = new ArrayList();
+//            launchCommandData.addAll(Arrays.asList(configManager.getLaunchCommand().split("\\s")));
+//            String javaExecutable = launchCommandData.get(0);
+//            String jarFile = launchCommandData.get(2);
+//
+//            if(!environmentManager.isPathExists(workingDirectory + "/" + jarFile)){
+//                throw new FileNotFoundException("Не найден файл " + jarFile);
+//            }
+//
+//            if(!javaExecutable.equalsIgnoreCase("java")){
+//               if(!environmentManager.isPathExists(workingDirectory + "/" + javaExecutable + ".exe")){
+//                   launchCommandData.set(0, "java");
+//               }
+//            }
+//
+//            //Добавляем classpath
+//            String classpathValue = configManager.getClassPath();
+//            launchCommandData.add(1, "-classpath");
+//            launchCommandData.add(2, "\"" + classpathValue + "\"");
+//
+//            processManager = new ScanStationManager(workingDirectory, launchCommandData);
+//            processManager.runApplication();
 
         }
 
