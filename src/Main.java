@@ -1,20 +1,11 @@
-import ru.sigmait.applicationmanagement.ApplicationManager;
-import ru.sigmait.configmanagement.ConfigManager;
-import ru.sigmait.environmentmanagement.EnvironmentManager;
-import ru.sigmait.exceptions.ProcessException;
-import ru.sigmait.scanstationmanagement.ScanStationManager;
+import ru.sigmait.managers.ApplicationManager;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class Main {
 
@@ -28,11 +19,12 @@ public class Main {
 
         try {
             applicationManager =  new ApplicationManager();
+
         }catch(Exception e){
             System.err.println(e.getMessage());
         }finally {
             if(applicationManager != null) {
-                applicationManager.stop();
+                applicationManager.stopBackgroundOperations();
             }
             releaseLock();
             System.exit(0);

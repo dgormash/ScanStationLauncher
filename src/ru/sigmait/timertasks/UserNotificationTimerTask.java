@@ -1,6 +1,6 @@
 package ru.sigmait.timertasks;
 
-import ru.sigmait.applicationmanagement.NotificationResultListener;
+import ru.sigmait.lilsteners.NotificationResultListener;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ public class UserNotificationTimerTask extends TimerTask {
 
     @Override
     public void run() {
-        notifyUser();
+            notifyUser();
     }
 
     private  void notifyUser(){
@@ -29,6 +29,9 @@ public class UserNotificationTimerTask extends TimerTask {
 
     public void addListener (NotificationResultListener listener){
         _listeners.add(listener);
+    }
+    public void removeListeners(){
+        _listeners.clear();
     }
 }
 

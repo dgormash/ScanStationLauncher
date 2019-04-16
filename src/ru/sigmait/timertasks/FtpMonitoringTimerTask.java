@@ -1,9 +1,9 @@
 package ru.sigmait.timertasks;
 
-import ru.sigmait.environmentmanagement.FileDownloadedListener;
-import ru.sigmait.ftpmanagement.FtpConfig;
-import ru.sigmait.ftpmanagement.FtpErrorListener;
-import ru.sigmait.ftpmanagement.FtpManager;
+import ru.sigmait.lilsteners.FileDownloadedListener;
+import ru.sigmait.misc.FtpConfig;
+import ru.sigmait.lilsteners.FtpErrorListener;
+import ru.sigmait.managers.FtpManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,7 +41,9 @@ public class FtpMonitoringTimerTask extends TimerTask {
     }
 
     private void startTask() throws IOException {
+        int count = 0;
         try {
+
             FtpManager ftpManager = new FtpManager(_config);
             List<String> files = ftpManager.dir();
             String fullInstallerFileMask = _config.get_fullInstallerMask();
@@ -87,13 +89,19 @@ public class FtpMonitoringTimerTask extends TimerTask {
             if (downloadResult) {
                 notifyListeners(destinationFilePath);
             }
+            count ++;
         }catch(Exception e){
-            System.err.println(e.getMessage() + e.getCause());
+            notifyErrorListeners(e.getMessage()+ count);
         }
     }
 
     public  void addListener(FileDownloadedListener listener){
         _ftpEventsListeners.add(listener);
+    }
+
+    public void removeListeners(){
+        _ftpEventsListeners.clear();
+        _errorListeners.clear();
     }
 
     private void notifyListeners(String filePath){
@@ -108,7 +116,7 @@ public class FtpMonitoringTimerTask extends TimerTask {
 
     private void notifyErrorListeners(String message){
         for (FtpErrorListener listener: _errorListeners) {
-            listener.ErrorOccurred(message);
+            listener.FtpManagerErrorOccurred(message);
         }
     }
 }
